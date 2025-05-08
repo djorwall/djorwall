@@ -13,6 +13,7 @@ import {
   AlertCircle,
   User,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export default function AdminSidebar() {
   const pathname = usePathname()
@@ -82,6 +83,16 @@ export default function AdminSidebar() {
             </div>
           )
         })}
+        <Link
+          href="/admin/test-env"
+          className={cn(
+            "flex items-center gap-2 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900",
+            pathname === "/admin/test-env" ? "bg-gray-100 text-gray-900" : "",
+          )}
+        >
+          <Settings className="h-4 w-4" />
+          <span>Environment Test</span>
+        </Link>
       </nav>
       <div className="p-4 mt-auto">
         <Link

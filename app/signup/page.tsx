@@ -20,7 +20,6 @@ export default function SignupPage() {
   const searchParams = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
 
   // Form state
   const [role, setRole] = useState(searchParams.get("role") || "agent")
@@ -55,11 +54,17 @@ export default function SignupPage() {
         return
       }
 
-      // Show success message and confirmation instructions
-      setIsSubmitted(true)
+      // Show success message
       toast.success("Account created successfully", {
-        description: "Please check your email to confirm your account.",
+        description: "Welcome to the platform!",
       })
+
+      // Redirect to the appropriate dashboard based on role
+      if (role === "agent") {
+        router.push("/dashboard/agent")
+      } else {
+        router.push("/dashboard/brand")
+      }
     } catch (error) {
       toast.error("An unexpected error occurred", {
         description: "Please try again later.",
@@ -67,39 +72,6 @@ export default function SignupPage() {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (isSubmitted) {
-    return (
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl">Check your email</CardTitle>
-          <CardDescription>We've sent you a confirmation email</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-md bg-blue-50 p-4 text-blue-800">
-            <p>
-              We've sent a confirmation email to <strong>{email}</strong>. Please check your inbox and click the
-              confirmation link to activate your account.
-            </p>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            If you don't see the email, please check your spam folder. The confirmation link will expire in 24 hours.
-          </p>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <Button asChild variant="outline" className="w-full">
-            <Link href="/login">Go to Login</Link>
-          </Button>
-          <div className="text-center text-sm">
-            Didn't receive the email?{" "}
-            <Button variant="link" className="p-0" onClick={() => setIsSubmitted(false)}>
-              Try again
-            </Button>
-          </div>
-        </CardFooter>
-      </Card>
-    )
   }
 
   return (

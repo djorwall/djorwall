@@ -8,8 +8,8 @@ export default function EmailConfirmedPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl">Email Confirmed</CardTitle>
-          <CardDescription>Your email has been successfully confirmed</CardDescription>
+          <CardTitle className="text-2xl">Account Created</CardTitle>
+          <CardDescription>Your account has been successfully created</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col items-center justify-center space-y-4 py-6">
@@ -17,9 +17,9 @@ export default function EmailConfirmedPage() {
               <CheckCircle className="h-6 w-6 text-green-600" />
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-medium">Account Activated</h3>
+              <h3 className="text-lg font-medium">Welcome to the Platform</h3>
               <p className="text-sm text-muted-foreground">
-                Your account has been successfully activated. You can now log in to access your dashboard.
+                Your account has been successfully created. You can now log in to access your dashboard.
               </p>
             </div>
           </div>
