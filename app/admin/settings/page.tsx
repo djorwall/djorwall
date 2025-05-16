@@ -1,239 +1,228 @@
-"use client"
-
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
-import { toast } from "sonner"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function SettingsPage() {
-  const [isLoading, setIsLoading] = useState(false)
-
-  // System settings
-  const [systemName, setSystemName] = useState("InfluencerSheets")
-  const [supportEmail, setSupportEmail] = useState("support@influencersheets.com")
-  const [maintenanceMode, setMaintenanceMode] = useState(false)
-
-  // Email settings
-  const [smtpHost, setSmtpHost] = useState("")
-  const [smtpPort, setSmtpPort] = useState("")
-  const [smtpUser, setSmtpUser] = useState("")
-  const [smtpPassword, setSmtpPassword] = useState("")
-  const [emailFrom, setEmailFrom] = useState("")
-
-  // Security settings
-  const [maxLoginAttempts, setMaxLoginAttempts] = useState("5")
-  const [sessionTimeout, setSessionTimeout] = useState("24")
-  const [requireMfa, setRequireMfa] = useState(false)
-
-  // Notification templates
-  const [welcomeTemplate, setWelcomeTemplate] = useState(
-    "Welcome to {{systemName}}!\n\nThank you for joining our platform. We're excited to have you on board.",
-  )
-
-  const handleSaveSystemSettings = () => {
-    setIsLoading(true)
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      toast.success("System settings saved successfully")
-    }, 1000)
-  }
-
-  const handleSaveEmailSettings = () => {
-    setIsLoading(true)
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      toast.success("Email settings saved successfully")
-    }, 1000)
-  }
-
-  const handleSaveSecuritySettings = () => {
-    setIsLoading(true)
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      toast.success("Security settings saved successfully")
-    }, 1000)
-  }
-
-  const handleSaveNotificationTemplates = () => {
-    setIsLoading(true)
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      toast.success("Notification templates saved successfully")
-    }, 1000)
-  }
-
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">System Settings</h1>
+    <div>
+      <h1 className="text-3xl font-bold mb-6">Settings</h1>
 
-      <Tabs defaultValue="general">
+      <Tabs defaultValue="general" className="space-y-6">
         <TabsList>
           <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="email">Email</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="appearance">Appearance</TabsTrigger>
+          <TabsTrigger value="advanced">Advanced</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="general" className="space-y-4 mt-6">
+        <TabsContent value="general" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>General Settings</CardTitle>
-              <CardDescription>Configure basic system settings</CardDescription>
+              <CardDescription>Configure basic platform settings</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="system-name">System Name</Label>
-                <Input id="system-name" value={systemName} onChange={(e) => setSystemName(e.target.value)} />
+                <Label htmlFor="site-name">Site Name</Label>
+                <Input id="site-name" defaultValue="Appopener.io" />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="support-email">Support Email</Label>
-                <Input
-                  id="support-email"
-                  type="email"
-                  value={supportEmail}
-                  onChange={(e) => setSupportEmail(e.target.value)}
-                />
+                <Label htmlFor="site-url">Site URL</Label>
+                <Input id="site-url" defaultValue="https://appopener.io" />
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Switch id="maintenance-mode" checked={maintenanceMode} onCheckedChange={setMaintenanceMode} />
-                <Label htmlFor="maintenance-mode">Maintenance Mode</Label>
-              </div>
+              <Separator />
 
-              <Button onClick={handleSaveSystemSettings} disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save Settings"}
-              </Button>
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Link Creation</h3>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="anonymous-links">Anonymous Link Creation</Label>
+                    <p className="text-sm text-muted-foreground">Allow users to create links without logging in</p>
+                  </div>
+                  <Switch id="anonymous-links" defaultChecked />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="require-captcha">Require Captcha</Label>
+                    <p className="text-sm text-muted-foreground">Require captcha verification for link creation</p>
+                  </div>
+                  <Switch id="require-captcha" defaultChecked />
+                </div>
+              </div>
             </CardContent>
+            <CardFooter>
+              <Button>Save Changes</Button>
+            </CardFooter>
           </Card>
         </TabsContent>
 
-        <TabsContent value="email" className="space-y-4 mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Email Settings</CardTitle>
-              <CardDescription>Configure email server settings</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="smtp-host">SMTP Host</Label>
-                  <Input id="smtp-host" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="smtp-port">SMTP Port</Label>
-                  <Input id="smtp-port" value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="smtp-user">SMTP Username</Label>
-                  <Input id="smtp-user" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="smtp-password">SMTP Password</Label>
-                  <Input
-                    id="smtp-password"
-                    type="password"
-                    value={smtpPassword}
-                    onChange={(e) => setSmtpPassword(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email-from">From Email Address</Label>
-                <Input id="email-from" type="email" value={emailFrom} onChange={(e) => setEmailFrom(e.target.value)} />
-              </div>
-
-              <Button onClick={handleSaveEmailSettings} disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save Settings"}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="security" className="space-y-4 mt-6">
+        <TabsContent value="security" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Security Settings</CardTitle>
-              <CardDescription>Configure security and authentication settings</CardDescription>
+              <CardDescription>Configure security and access settings</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="max-login-attempts">Max Login Attempts</Label>
-                  <Input
-                    id="max-login-attempts"
-                    type="number"
-                    value={maxLoginAttempts}
-                    onChange={(e) => setMaxLoginAttempts(e.target.value)}
-                  />
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="captcha-anonymous">Captcha for Anonymous Users</Label>
+                    <p className="text-sm text-muted-foreground">Require captcha verification for anonymous users</p>
+                  </div>
+                  <Switch id="captcha-anonymous" defaultChecked />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="captcha-logged-in">Captcha for Logged-in Users</Label>
+                    <p className="text-sm text-muted-foreground">Require captcha verification for logged-in users</p>
+                  </div>
+                  <Switch id="captcha-logged-in" />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="session-timeout">Session Timeout (hours)</Label>
-                  <Input
-                    id="session-timeout"
-                    type="number"
-                    value={sessionTimeout}
-                    onChange={(e) => setSessionTimeout(e.target.value)}
-                  />
+                  <Label htmlFor="captcha-provider">Captcha Provider</Label>
+                  <Select defaultValue="recaptcha">
+                    <SelectTrigger id="captcha-provider">
+                      <SelectValue placeholder="Select provider" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="recaptcha">Google reCAPTCHA</SelectItem>
+                      <SelectItem value="hcaptcha">hCaptcha</SelectItem>
+                      <SelectItem value="turnstile">Cloudflare Turnstile</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Switch id="require-mfa" checked={requireMfa} onCheckedChange={setRequireMfa} />
-                <Label htmlFor="require-mfa">Require MFA for Admins</Label>
-              </div>
+              <Separator />
 
-              <Button onClick={handleSaveSecuritySettings} disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save Settings"}
-              </Button>
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Rate Limiting</h3>
+
+                <div className="space-y-2">
+                  <Label htmlFor="click-limit">Click Limit per Link</Label>
+                  <Input id="click-limit" type="number" defaultValue="0" />
+                  <p className="text-xs text-muted-foreground">Set to 0 for unlimited clicks</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="creation-limit">Link Creation Limit</Label>
+                  <Input id="creation-limit" type="number" defaultValue="100" />
+                  <p className="text-xs text-muted-foreground">Maximum links per user per day</p>
+                </div>
+              </div>
             </CardContent>
+            <CardFooter>
+              <Button>Save Changes</Button>
+            </CardFooter>
           </Card>
         </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-4 mt-6">
+        <TabsContent value="appearance" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Notification Templates</CardTitle>
-              <CardDescription>Configure email notification templates</CardDescription>
+              <CardTitle>Appearance Settings</CardTitle>
+              <CardDescription>Customize the look and feel of the platform</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="welcome-template">Welcome Email Template</Label>
-                <Textarea
-                  id="welcome-template"
-                  rows={6}
-                  value={welcomeTemplate}
-                  onChange={(e) => setWelcomeTemplate(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Available variables: {`{{\\'systemName\\'}}`}, {`{{\\'userName\\'}}`}, {`{{\\'userEmail\\'}}`}
-                </p>
+                <Label htmlFor="theme">Theme</Label>
+                <Select defaultValue="light">
+                  <SelectTrigger id="theme">
+                    <SelectValue placeholder="Select theme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light">Light</SelectItem>
+                    <SelectItem value="dark">Dark</SelectItem>
+                    <SelectItem value="system">System</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <Button onClick={handleSaveNotificationTemplates} disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save Templates"}
-              </Button>
+              <div className="space-y-2">
+                <Label htmlFor="primary-color">Primary Color</Label>
+                <div className="flex items-center gap-2">
+                  <Input id="primary-color" defaultValue="#007BFF" />
+                  <div className="w-10 h-10 rounded-md bg-primary" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="accent-color">Accent Color</Label>
+                <div className="flex items-center gap-2">
+                  <Input id="accent-color" defaultValue="#28A745" />
+                  <div className="w-10 h-10 rounded-md bg-accent" />
+                </div>
+              </div>
             </CardContent>
+            <CardFooter>
+              <Button>Save Changes</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="advanced" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Advanced Settings</CardTitle>
+              <CardDescription>Configure advanced platform settings</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Redirect Settings</h3>
+
+                <div className="space-y-2">
+                  <Label htmlFor="countdown-timer">Default Countdown Timer (seconds)</Label>
+                  <Input id="countdown-timer" type="number" defaultValue="5" />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="show-ads">Show Ads on Redirect Page</Label>
+                    <p className="text-sm text-muted-foreground">Display advertisements on the redirect page</p>
+                  </div>
+                  <Switch id="show-ads" defaultChecked />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="button-text">Default Button Text</Label>
+                  <Input id="button-text" defaultValue="GO" />
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Fallback Behavior</h3>
+
+                <div className="space-y-2">
+                  <Label htmlFor="fallback-behavior">Default Fallback</Label>
+                  <Select defaultValue="web">
+                    <SelectTrigger id="fallback-behavior">
+                      <SelectValue placeholder="Select fallback behavior" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="web">Web URL</SelectItem>
+                      <SelectItem value="store">App Store</SelectItem>
+                      <SelectItem value="custom">Custom URL</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button>Save Changes</Button>
+            </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>

@@ -1,23 +1,20 @@
-import type { ReactNode } from "react"
-
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import type { LucideIcon } from "lucide-react"
 
 interface FeatureCardProps {
-  icon: ReactNode
+  icon: LucideIcon
   title: string
   description: string
+  iconColor?: string
 }
 
-export function FeatureCard({ icon, title, description }: FeatureCardProps) {
+export function FeatureCard({ icon: Icon, title, description, iconColor = "text-primary" }: FeatureCardProps) {
   return (
-    <Card className="transition-all hover:shadow-md">
-      <CardHeader className="pb-2">
-        <div className="mb-2">{icon}</div>
-        <h3 className="text-xl font-bold">{title}</h3>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
+    <div className="flex flex-col items-center p-6 text-center bg-white rounded-lg border shadow-sm">
+      <div className={`mb-4 ${iconColor}`}>
+        <Icon className="h-8 w-8" />
+      </div>
+      <h3 className="text-lg font-medium mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </div>
   )
 }

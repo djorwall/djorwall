@@ -1,17 +1,14 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import { Toaster } from "sonner"
-
-import { ThemeProvider } from "@/components/theme-provider"
-import { AuthProvider } from "@/contexts/auth-context"
 import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "InfluencerSheets - Manage Your Influencer Network",
-  description: "Create, manage, and share dynamic influencer sheets with brands and collaborators.",
+  title: "Appopener.io - Smart Links for Native Apps",
+  description: "Create shortened smart deeplinks that open in native apps with integrated analytics",
     generator: 'v0.dev'
 }
 
@@ -23,11 +20,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <AuthProvider>
-            {children}
-            <Toaster position="top-right" />
-          </AuthProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+          {children}
         </ThemeProvider>
       </body>
     </html>

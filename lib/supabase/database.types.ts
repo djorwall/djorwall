@@ -1,0 +1,181 @@
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+
+export interface Database {
+  public: {
+    Tables: {
+      profiles: {
+        Row: {
+          id: string
+          username: string | null
+          full_name: string | null
+          avatar_url: string | null
+          website: string | null
+          is_admin: boolean
+          is_banned: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          username?: string | null
+          full_name?: string | null
+          avatar_url?: string | null
+          website?: string | null
+          is_admin?: boolean
+          is_banned?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          username?: string | null
+          full_name?: string | null
+          avatar_url?: string | null
+          website?: string | null
+          is_admin?: boolean
+          is_banned?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      links: {
+        Row: {
+          id: string
+          short_id: string
+          original_url: string
+          title: string | null
+          user_id: string | null
+          is_active: boolean
+          password: string | null
+          expiry_date: string | null
+          android_url: string | null
+          ios_url: string | null
+          fallback_url: string | null
+          utm_source: string | null
+          utm_medium: string | null
+          utm_campaign: string | null
+          utm_term: string | null
+          utm_content: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          short_id: string
+          original_url: string
+          title?: string | null
+          user_id?: string | null
+          is_active?: boolean
+          password?: string | null
+          expiry_date?: string | null
+          android_url?: string | null
+          ios_url?: string | null
+          fallback_url?: string | null
+          utm_source?: string | null
+          utm_medium?: string | null
+          utm_campaign?: string | null
+          utm_term?: string | null
+          utm_content?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          short_id?: string
+          original_url?: string
+          title?: string | null
+          user_id?: string | null
+          is_active?: boolean
+          password?: string | null
+          expiry_date?: string | null
+          android_url?: string | null
+          ios_url?: string | null
+          fallback_url?: string | null
+          utm_source?: string | null
+          utm_medium?: string | null
+          utm_campaign?: string | null
+          utm_term?: string | null
+          utm_content?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      clicks: {
+        Row: {
+          id: string
+          link_id: string
+          ip_address: string | null
+          user_agent: string | null
+          referrer: string | null
+          device_type: string | null
+          browser: string | null
+          os: string | null
+          country: string | null
+          region: string | null
+          city: string | null
+          latitude: number | null
+          longitude: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          link_id: string
+          ip_address?: string | null
+          user_agent?: string | null
+          referrer?: string | null
+          device_type?: string | null
+          browser?: string | null
+          os?: string | null
+          country?: string | null
+          region?: string | null
+          city?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          link_id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          referrer?: string | null
+          device_type?: string | null
+          browser?: string | null
+          os?: string | null
+          country?: string | null
+          region?: string | null
+          city?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          created_at?: string
+        }
+      }
+      settings: {
+        Row: {
+          id: string
+          key: string
+          value: Json
+          description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          value: Json
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          value?: Json
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+    }
+  }
+}
