@@ -119,6 +119,40 @@ export async function signIn(formData: FormData) {
   }
 }
 
+// Sign in with Google
+export async function signInWithGoogle() {
+  try {
+    const supabase = createServerActionClient<Database>({ cookies })
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://appopener.io"
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${siteUrl}/auth/callback`,
+      },
+    })
+
+    if (error) {
+      console.error("Error signing in with Google:", error)
+      return {
+        success: false,
+        message: error.message,
+      }
+    }
+
+    return {
+      success: true,
+      url: data.url,
+    }
+  } catch (error) {
+    console.error("Error signing in with Google:", error)
+    return {
+      success: false,
+      message: "An unexpected error occurred. Please try again.",
+    }
+  }
+}
+
 // Sign out a user
 export async function signOut() {
   const supabase = createServerActionClient<Database>({ cookies })

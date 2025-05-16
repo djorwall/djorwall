@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle2, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
+import { GoogleButton } from "@/components/auth/google-button"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -90,8 +91,19 @@ export default function LoginPage() {
             <CardTitle className="text-2xl font-bold">Login</CardTitle>
             <CardDescription>Enter your credentials to access your account</CardDescription>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
+          <CardContent className="space-y-4">
+            <GoogleButton />
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" name="email" type="email" placeholder="m@example.com" required />
@@ -111,19 +123,19 @@ export default function LoginPage() {
                   Remember me
                 </Label>
               </div>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-4">
               <Button className="w-full" type="submit" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Login"}
               </Button>
-              <div className="text-center text-sm">
-                Don't have an account?{" "}
-                <Link href="/signup" className="text-primary hover:underline">
-                  Sign up
-                </Link>
-              </div>
-            </CardFooter>
-          </form>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
+            <div className="text-center text-sm">
+              Don't have an account?{" "}
+              <Link href="/signup" className="text-primary hover:underline">
+                Sign up
+              </Link>
+            </div>
+          </CardFooter>
         </Card>
       </main>
       <Toaster />

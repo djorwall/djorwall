@@ -14,6 +14,7 @@ import { Navbar } from "@/components/navbar"
 import { Mail } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
+import { GoogleButton } from "@/components/auth/google-button"
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -114,8 +115,19 @@ export default function SignupPage() {
               <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
               <CardDescription>Enter your information to create an account</CardDescription>
             </CardHeader>
-            <form onSubmit={handleSubmit}>
-              <CardContent className="space-y-4">
+            <CardContent className="space-y-4">
+              <GoogleButton />
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="first-name">First name</Label>
@@ -151,19 +163,19 @@ export default function SignupPage() {
                     </Link>
                   </Label>
                 </div>
-              </CardContent>
-              <CardFooter className="flex flex-col space-y-4">
                 <Button className="w-full" type="submit" disabled={isLoading}>
                   {isLoading ? "Creating account..." : "Create account"}
                 </Button>
-                <div className="text-center text-sm">
-                  Already have an account?{" "}
-                  <Link href="/login" className="text-primary hover:underline">
-                    Login
-                  </Link>
-                </div>
-              </CardFooter>
-            </form>
+              </form>
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-4">
+              <div className="text-center text-sm">
+                Already have an account?{" "}
+                <Link href="/login" className="text-primary hover:underline">
+                  Login
+                </Link>
+              </div>
+            </CardFooter>
           </Card>
         )}
       </main>
