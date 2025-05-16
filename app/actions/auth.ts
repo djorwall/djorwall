@@ -24,6 +24,9 @@ export async function signUp(formData: FormData) {
   try {
     const supabase = createServerActionClient<Database>({ cookies })
 
+    // Get the site URL from environment variable
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://appopener.io"
+
     // Create a new user
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -32,7 +35,7 @@ export async function signUp(formData: FormData) {
         data: {
           full_name: `${firstName} ${lastName}`,
         },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/confirm`,
+        emailRedirectTo: `${siteUrl}/auth/confirm`,
       },
     })
 
@@ -139,8 +142,11 @@ export async function requestPasswordReset(formData: FormData) {
   try {
     const supabase = createServerActionClient<Database>({ cookies })
 
+    // Get the site URL from environment variable
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://appopener.io"
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
+      redirectTo: `${siteUrl}/auth/reset-password`,
     })
 
     if (error) {
