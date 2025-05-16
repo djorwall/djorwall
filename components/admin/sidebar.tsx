@@ -1,84 +1,123 @@
 "use client"
 
+import type React from "react"
+
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart2, Users, Settings, Home, LogOut, LayoutDashboard, ImageIcon, RefreshCw } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { BarChart3, Link2, Settings, Users, Home, LayoutDashboard, Megaphone, Key } from "lucide-react"
 
-const navItems = [
-  {
-    title: "Dashboard",
-    href: "/admin",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Users",
-    href: "/admin/users",
-    icon: Users,
-  },
-  {
-    title: "Ads",
-    href: "/admin/ads",
-    icon: ImageIcon,
-  },
-  {
-    title: "Redirects",
-    href: "/admin/redirects",
-    icon: RefreshCw,
-  },
-  {
-    title: "Settings",
-    href: "/admin/settings",
-    icon: Settings,
-  },
-  {
-    title: "Analytics",
-    href: "/admin/analytics",
-    icon: BarChart2,
-  },
-]
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-export function AdminSidebar() {
+export function AdminSidebar({ className, ...props }: SidebarProps) {
   const pathname = usePathname()
 
   return (
-    <div className="w-64 border-r h-screen bg-white flex flex-col">
-      <div className="p-4 border-b bg-primary text-white">
-        <Link href="/" className="flex items-center gap-2">
-          <Home className="h-5 w-5" />
-          <span className="font-bold text-lg">Admin Panel</span>
-        </Link>
-      </div>
-
-      <nav className="flex-1 p-4">
-        <ul className="space-y-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href
-
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
-                    isActive ? "bg-primary text-white" : "text-muted-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.title}</span>
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
-      </nav>
-
-      <div className="p-4 border-t">
-        <Link
-          href="/logout"
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-secondary"
-        >
-          <LogOut className="h-4 w-4" />
-          <span>Logout</span>
-        </Link>
+    <div className={cn("pb-12", className)} {...props}>
+      <div className="space-y-4 py-4">
+        <div className="px-4 py-2">
+          <h2 className="mb-2 px-2 text-xl font-semibold tracking-tight">Admin Dashboard</h2>
+          <div className="space-y-1">
+            <Link
+              href="/admin"
+              className={cn(
+                "flex items-center rounded-md px-2 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/admin" && "bg-accent text-accent-foreground",
+              )}
+            >
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              <span>Overview</span>
+            </Link>
+            <Link
+              href="/admin/users"
+              className={cn(
+                "flex items-center rounded-md px-2 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/admin/users" && "bg-accent text-accent-foreground",
+              )}
+            >
+              <Users className="mr-2 h-4 w-4" />
+              <span>Users</span>
+            </Link>
+            <Link
+              href="/admin/links"
+              className={cn(
+                "flex items-center rounded-md px-2 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/admin/links" && "bg-accent text-accent-foreground",
+              )}
+            >
+              <Link2 className="mr-2 h-4 w-4" />
+              <span>Links</span>
+            </Link>
+            <Link
+              href="/admin/analytics"
+              className={cn(
+                "flex items-center rounded-md px-2 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/admin/analytics" && "bg-accent text-accent-foreground",
+              )}
+            >
+              <BarChart3 className="mr-2 h-4 w-4" />
+              <span>Analytics</span>
+            </Link>
+          </div>
+        </div>
+        <div className="px-4 py-2">
+          <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">Configuration</h2>
+          <div className="space-y-1">
+            <Link
+              href="/admin/settings"
+              className={cn(
+                "flex items-center rounded-md px-2 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/admin/settings" && "bg-accent text-accent-foreground",
+              )}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </Link>
+            <Link
+              href="/admin/api"
+              className={cn(
+                "flex items-center rounded-md px-2 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/admin/api" && "bg-accent text-accent-foreground",
+              )}
+            >
+              <Key className="mr-2 h-4 w-4" />
+              <span>API Keys</span>
+            </Link>
+            <Link
+              href="/admin/ads"
+              className={cn(
+                "flex items-center rounded-md px-2 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                pathname === "/admin/ads" && "bg-accent text-accent-foreground",
+              )}
+            >
+              <Megaphone className="mr-2 h-4 w-4" />
+              <span>Ads</span>
+            </Link>
+          </div>
+        </div>
+        <div className="px-4 py-2">
+          <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">Other</h2>
+          <div className="space-y-1">
+            <Link
+              href="/dashboard"
+              className={cn(
+                "flex items-center rounded-md px-2 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+              )}
+            >
+              <Home className="mr-2 h-4 w-4" />
+              <span>User Dashboard</span>
+            </Link>
+            <Link
+              href="/"
+              className={cn(
+                "flex items-center rounded-md px-2 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+              )}
+            >
+              <Home className="mr-2 h-4 w-4" />
+              <span>Home Page</span>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )
