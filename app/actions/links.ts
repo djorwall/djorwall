@@ -122,6 +122,63 @@ export async function getUserLinks() {
   }
 }
 
+// Get link by ID
+export async function getLinkById(id: string) {
+  try {
+    const supabase = createServerActionClient<Database>({ cookies })
+
+    // Check if user is authenticated
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session?.user) {
+      return {
+        success: false,
+        message: "User not authenticated",
+      }
+    }
+
+    // Get link by ID
+    const { data, error } = await supabase
+      .from("links")
+      .select(`
+        id,
+        short_id,
+        original_url,
+        title,
+        is_active,
+        android_url,
+        ios_url,
+        fallback_url,
+        created_at,
+        updated_at
+      `)
+      .eq("id", id)
+      .eq("user_id", session.user.id)
+      .single()
+
+    if (error || !data) {
+      console.error("Error fetching link:", error)
+      return {
+        success: false,
+        message: "Link not found or you do not have permission to view it",
+      }
+    }
+
+    return {
+      success: true,
+      data,
+    }
+  } catch (error) {
+    console.error("Error fetching link:", error)
+    return {
+      success: false,
+      message: "An unexpected error occurred. Please try again.",
+    }
+  }
+}
+
 // Get link by short ID
 export async function getLinkByShortId(shortId: string) {
   try {

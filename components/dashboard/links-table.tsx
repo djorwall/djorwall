@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "@/components/ui/use-toast"
 import { formatDate } from "@/lib/utils/links"
-import { Copy, ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { BarChart2, Copy, ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import NextLink from "next/link"
 import { useState } from "react"
 
@@ -114,6 +114,11 @@ export function DashboardLinksTable({ links }: DashboardLinksTableProps) {
                     <a href={`/${link.short_id}`} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-4 w-4" />
                     </a>
+                  </Button>
+                  <Button variant="ghost" size="icon" title="Analytics" asChild>
+                    <NextLink href={`/dashboard/links/${link.id}/analytics`}>
+                      <BarChart2 className="h-4 w-4" />
+                    </NextLink>
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

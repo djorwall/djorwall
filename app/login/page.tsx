@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { Navbar } from "@/components/navbar"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { CheckCircle2, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 
@@ -18,16 +20,24 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const searchParams = useSearchParams()
   const message = searchParams.get("message")
+  const error = searchParams.get("error")
 
   useEffect(() => {
     if (message) {
       toast({
-        title: "Authentication Required",
+        title: "Success",
         description: message,
+      })
+    }
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
         variant: "destructive",
       })
     }
-  }, [message])
+  }, [message, error])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -62,6 +72,20 @@ export default function LoginPage() {
 
       <main className="flex-1 flex items-center justify-center p-6">
         <Card className="w-full max-w-md">
+          {message && (
+            <Alert className="mb-4 border-green-200 bg-green-50 text-green-800">
+              <CheckCircle2 className="h-4 w-4" />
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
+          )}
+
+          {error && (
+            <Alert className="mb-4 border-red-200 bg-red-50 text-red-800">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">Login</CardTitle>
             <CardDescription>Enter your credentials to access your account</CardDescription>

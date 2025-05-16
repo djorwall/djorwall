@@ -32,6 +32,7 @@ export async function signUp(formData: FormData) {
         data: {
           full_name: `${firstName} ${lastName}`,
         },
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/confirm`,
       },
     })
 
@@ -83,7 +84,7 @@ export async function signIn(formData: FormData) {
   try {
     const supabase = createServerActionClient<Database>({ cookies })
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error, data } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
@@ -93,6 +94,14 @@ export async function signIn(formData: FormData) {
       return {
         success: false,
         message: error.message,
+      }
+    }
+
+    // Check if email is confirmed
+    if (!data.user.email_confirmed_at) {
+      return {
+        success: false,
+        message: "Please confirm your email address before logging in.",
       }
     }
 
@@ -114,6 +123,96 @@ export async function signOut() {
   await supabase.auth.signOut()
   revalidatePath("/", "layout")
   redirect("/")
+}
+
+// Request password reset
+export async function requestPasswordReset(formData: FormData) {
+  const email = formData.get("email") as string
+
+  if (!email) {
+    return {
+      success: false,
+      message: "Please enter your email address",
+    }
+  }
+
+  try {
+    const supabase = createServerActionClient<Database>({ cookies })
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password`,
+    })
+
+    if (error) {
+      console.error("Error requesting password reset:", error)
+      return {
+        success: false,
+        message: error.message,
+      }
+    }
+
+    return {
+      success: true,
+      message: "Password reset instructions have been sent to your email.",
+    }
+  } catch (error) {
+    console.error("Error requesting password reset:", error)
+    return {
+      success: false,
+      message: "An unexpected error occurred. Please try again.",
+    }
+  }
+}
+
+// Reset password
+export async function resetPassword(formData: FormData) {
+  const password = formData.get("password") as string
+  const tokenHash = formData.get("token_hash") as string
+  const type = formData.get("type") as string
+
+  if (!password) {
+    return {
+      success: false,
+      message: "Please enter a new password",
+    }
+  }
+
+  if (!tokenHash || type !== "recovery") {
+    return {
+      success: false,
+      message: "Invalid reset token. Please request a new password reset link.",
+    }
+  }
+
+  try {
+    const supabase = createServerActionClient<Database>({ cookies })
+
+    // Verify the token and update the password
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: "recovery",
+      new_password: password,
+    })
+
+    if (error) {
+      console.error("Error resetting password:", error)
+      return {
+        success: false,
+        message: error.message,
+      }
+    }
+
+    return {
+      success: true,
+      message: "Your password has been reset successfully.",
+    }
+  } catch (error) {
+    console.error("Error resetting password:", error)
+    return {
+      success: false,
+      message: "An unexpected error occurred. Please try again.",
+    }
+  }
 }
 
 // Get the current user
