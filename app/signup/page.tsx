@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import { useSearchParams } from "next/navigation"
 import { signUp } from "@/app/actions/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,11 +15,18 @@ import { Mail } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { GoogleButton } from "@/components/auth/google-button"
+import { isValidRedirectUrl } from "@/lib/utils/auth"
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [email, setEmail] = useState("")
+
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get("redirectTo") || "/dashboard"
+
+  // Validate the redirect URL for security
+  const safeRedirectUrl = isValidRedirectUrl(redirectTo) ? redirectTo : "/dashboard"
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -43,6 +50,9 @@ export default function SignupPage() {
         setIsLoading(false)
         return
       }
+
+      // Add the redirect URL to the form data
+      formData.append("redirectTo", safeRedirectUrl)
 
       const result = await signUp(formData)
 
@@ -105,7 +115,11 @@ export default function SignupPage() {
             </CardContent>
             <CardFooter>
               <Button asChild className="w-full">
-                <Link href="/login">Go to Login</Link>
+                <Link
+                  href={`/login${redirectTo !== "/dashboard" ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`}
+                >
+                  Go to Login
+                </Link>
               </Button>
             </CardFooter>
           </Card>
@@ -116,7 +130,7 @@ export default function SignupPage() {
               <CardDescription>Enter your information to create an account</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <GoogleButton />
+              <GoogleButton redirectTo={safeRedirectUrl} />
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
@@ -171,7 +185,10 @@ export default function SignupPage() {
             <CardFooter className="flex flex-col space-y-4">
               <div className="text-center text-sm">
                 Already have an account?{" "}
-                <Link href="/login" className="text-primary hover:underline">
+                <Link
+                  href={`/login${redirectTo !== "/dashboard" ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`}
+                  className="text-primary hover:underline"
+                >
                   Login
                 </Link>
               </div>

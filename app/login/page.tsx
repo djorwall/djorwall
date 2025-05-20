@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { signIn } from "@/app/actions/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,12 +16,19 @@ import { CheckCircle2, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { GoogleButton } from "@/components/auth/google-button"
+import { isValidRedirectUrl } from "@/lib/utils/auth"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const searchParams = useSearchParams()
+  const router = useRouter()
+
   const message = searchParams.get("message")
   const error = searchParams.get("error")
+  const redirectTo = searchParams.get("redirectTo") || "/dashboard"
+
+  // Validate the redirect URL for security
+  const safeRedirectUrl = isValidRedirectUrl(redirectTo) ? redirectTo : "/dashboard"
 
   useEffect(() => {
     if (message) {
@@ -46,6 +53,9 @@ export default function LoginPage() {
 
     try {
       const formData = new FormData(e.currentTarget)
+      // Add the redirect URL to the form data
+      formData.append("redirectTo", safeRedirectUrl)
+
       const result = await signIn(formData)
 
       if (!result?.success) {
@@ -54,6 +64,9 @@ export default function LoginPage() {
           description: result?.message || "Failed to sign in. Please check your credentials and try again.",
           variant: "destructive",
         })
+      } else if (result.redirectTo) {
+        // If we get a redirect URL back, use it
+        router.push(result.redirectTo)
       }
     } catch (error) {
       console.error("Error signing in:", error)
@@ -92,7 +105,7 @@ export default function LoginPage() {
             <CardDescription>Enter your credentials to access your account</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <GoogleButton />
+            <GoogleButton redirectTo={safeRedirectUrl} />
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -111,7 +124,10 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link href="/forgot-password" className="text-xs text-primary hover:underline">
+                  <Link
+                    href={`/forgot-password${redirectTo !== "/dashboard" ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`}
+                    className="text-xs text-primary hover:underline"
+                  >
                     Forgot password?
                   </Link>
                 </div>
@@ -131,7 +147,10 @@ export default function LoginPage() {
           <CardFooter className="flex flex-col space-y-4">
             <div className="text-center text-sm">
               Don't have an account?{" "}
-              <Link href="/signup" className="text-primary hover:underline">
+              <Link
+                href={`/signup${redirectTo !== "/dashboard" ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ""}`}
+                className="text-primary hover:underline"
+              >
                 Sign up
               </Link>
             </div>

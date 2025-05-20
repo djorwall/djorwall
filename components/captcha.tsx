@@ -13,6 +13,7 @@ interface CaptchaProps {
 
 interface ReCaptchaSettings {
   siteKey: string
+  version?: "v2" | "v3" | "invisible"
 }
 
 export function Captcha({ onVerify }: CaptchaProps) {
@@ -28,7 +29,21 @@ export function Captcha({ onVerify }: CaptchaProps) {
       try {
         const result = await getCaptchaSettings()
         if (result.success && result.data) {
-          setSettings(result.data as ReCaptchaSettings)
+          const data = result.data as ReCaptchaSettings
+
+          // If version isn't specified, try to determine it from the site key
+          if (!data.version) {
+            // reCAPTCHA v3 keys typically start with '6Lc' or '6Le'
+            // This is a heuristic and not 100% reliable
+            if (data.siteKey.startsWith("6Lc") || data.siteKey.startsWith("6Le")) {
+              data.version = "v3"
+            } else {
+              // Default to v2 checkbox if we can't determine
+              data.version = "v2"
+            }
+          }
+
+          setSettings(data)
         } else {
           setError("Failed to load reCAPTCHA settings")
           console.error("Error loading reCAPTCHA settings:", result.message)
@@ -106,7 +121,8 @@ export function Captcha({ onVerify }: CaptchaProps) {
           <span className="text-sm font-medium">reCAPTCHA Error</span>
         </div>
         <div className="text-xs text-destructive">
-          {error || "reCAPTCHA is not properly configured. Please contact the administrator."}
+          {error ||
+            "reCAPTCHA is not properly configured. Please try refreshing the page or contact the administrator."}
         </div>
       </div>
     )
@@ -127,13 +143,33 @@ export function Captcha({ onVerify }: CaptchaProps) {
 
   // Render Google reCAPTCHA
   return (
-    <div className="flex flex-col items-center gap-3 p-4 border rounded-lg bg-secondary/50">
+    <div className="flex flex-col items-center gap-3 p-4 border rounded-lg bg-secondary/50 w-full">
       <div className="flex items-center gap-2 mb-2">
         <Shield className="h-5 w-5 text-primary" />
         <span className="text-sm font-medium">reCAPTCHA Verification</span>
       </div>
 
-      <ReCAPTCHA ref={recaptchaRef} sitekey={settings.siteKey} onChange={handleReCaptchaChange} />
+      <div className="flex justify-center w-full overflow-hidden">
+        {settings.version === "v3" ? (
+          // For reCAPTCHA v3, we execute it immediately and invisibly
+          <ReCAPTCHA
+            ref={recaptchaRef}
+            sitekey={settings.siteKey}
+            onChange={handleReCaptchaChange}
+            size="invisible"
+            onLoad={() => {
+              // Execute reCAPTCHA v3 automatically
+              setTimeout(() => recaptchaRef.current?.execute(), 1000)
+            }}
+          />
+        ) : settings.version === "invisible" ? (
+          // For invisible reCAPTCHA v2
+          <ReCAPTCHA ref={recaptchaRef} sitekey={settings.siteKey} onChange={handleReCaptchaChange} size="invisible" />
+        ) : (
+          // Default to standard checkbox reCAPTCHA v2
+          <ReCAPTCHA ref={recaptchaRef} sitekey={settings.siteKey} onChange={handleReCaptchaChange} />
+        )}
+      </div>
 
       <div className="text-xs text-muted-foreground mt-2">
         This site is protected by reCAPTCHA and the Google{" "}

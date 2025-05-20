@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { createServerActionClient } from "@supabase/auth-helpers-nextjs"
 import type { Database } from "@/lib/supabase/database.types"
+import { isValidRedirectUrl } from "@/lib/utils/auth"
 
 // Sign up a new user
 export async function signUp(formData: FormData) {
@@ -13,6 +14,7 @@ export async function signUp(formData: FormData) {
   const password = formData.get("password") as string
   const firstName = formData.get("first-name") as string
   const lastName = formData.get("last-name") as string
+  const redirectTo = (formData.get("redirectTo") as string) || "/dashboard"
 
   if (!email || !password || !firstName || !lastName) {
     return {
@@ -34,6 +36,7 @@ export async function signUp(formData: FormData) {
       options: {
         data: {
           full_name: `${firstName} ${lastName}`,
+          redirect_to: isValidRedirectUrl(redirectTo) ? redirectTo : "/dashboard", // Store the redirect URL in user metadata
         },
         emailRedirectTo: `${siteUrl}/auth/confirm`,
       },
@@ -76,6 +79,10 @@ export async function signUp(formData: FormData) {
 export async function signIn(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
+  const redirectTo = (formData.get("redirectTo") as string) || "/dashboard"
+
+  // Validate the redirect URL for security
+  const safeRedirectUrl = isValidRedirectUrl(redirectTo) ? redirectTo : "/dashboard"
 
   if (!email || !password) {
     return {
@@ -109,7 +116,13 @@ export async function signIn(formData: FormData) {
     }
 
     revalidatePath("/", "layout")
-    redirect("/dashboard")
+
+    // Return success with the redirect URL instead of redirecting directly
+    // This allows the client to handle the redirect
+    return {
+      success: true,
+      redirectTo: safeRedirectUrl,
+    }
   } catch (error) {
     console.error("Error signing in:", error)
     return {
@@ -120,15 +133,27 @@ export async function signIn(formData: FormData) {
 }
 
 // Sign in with Google
-export async function signInWithGoogle() {
+export async function signInWithGoogle(redirectTo = "/dashboard") {
   try {
     const supabase = createServerActionClient<Database>({ cookies })
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://appopener.io"
+
+    // Validate the redirect URL for security
+    const safeRedirectUrl = isValidRedirectUrl(redirectTo) ? redirectTo : "/dashboard"
+
+    // Create a state parameter with the redirectTo URL
+    const state = encodeURIComponent(JSON.stringify({ redirectTo: safeRedirectUrl }))
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${siteUrl}/auth/callback`,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
+        // Pass the redirectTo URL in the state parameter
+        state,
       },
     })
 
@@ -154,17 +179,25 @@ export async function signInWithGoogle() {
 }
 
 // Sign out a user
-export async function signOut() {
+export async function signOut(redirectTo = "/") {
   const supabase = createServerActionClient<Database>({ cookies })
 
   await supabase.auth.signOut()
   revalidatePath("/", "layout")
-  redirect("/")
+
+  // Validate the redirect URL for security
+  const safeRedirectUrl = isValidRedirectUrl(redirectTo) ? redirectTo : "/"
+
+  redirect(safeRedirectUrl)
 }
 
 // Request password reset
 export async function requestPasswordReset(formData: FormData) {
   const email = formData.get("email") as string
+  const redirectTo = (formData.get("redirectTo") as string) || "/dashboard"
+
+  // Validate the redirect URL for security
+  const safeRedirectUrl = isValidRedirectUrl(redirectTo) ? redirectTo : "/dashboard"
 
   if (!email) {
     return {
@@ -180,7 +213,7 @@ export async function requestPasswordReset(formData: FormData) {
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://appopener.io"
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${siteUrl}/auth/reset-password`,
+      redirectTo: `${siteUrl}/auth/reset-password?redirectTo=${encodeURIComponent(safeRedirectUrl)}`,
     })
 
     if (error) {
@@ -209,6 +242,10 @@ export async function resetPassword(formData: FormData) {
   const password = formData.get("password") as string
   const tokenHash = formData.get("token_hash") as string
   const type = formData.get("type") as string
+  const redirectTo = (formData.get("redirectTo") as string) || "/login"
+
+  // Validate the redirect URL for security
+  const safeRedirectUrl = isValidRedirectUrl(redirectTo) ? redirectTo : "/login"
 
   if (!password) {
     return {
@@ -245,6 +282,7 @@ export async function resetPassword(formData: FormData) {
     return {
       success: true,
       message: "Your password has been reset successfully.",
+      redirectTo: safeRedirectUrl,
     }
   } catch (error) {
     console.error("Error resetting password:", error)

@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Captcha } from "@/components/captcha"
+import { MathPuzzle } from "@/components/math-puzzle"
 import { Copy, ExternalLink, Smartphone, LogIn } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
@@ -15,7 +15,7 @@ import Link from "next/link"
 export function UrlShortener() {
   const [url, setUrl] = useState("")
   const [shortUrl, setShortUrl] = useState("")
-  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false)
+  const [isPuzzleVerified, setIsPuzzleVerified] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
@@ -43,10 +43,10 @@ export function UrlShortener() {
       return
     }
 
-    if (!isLoggedIn && !isCaptchaVerified) {
+    if (!isLoggedIn && !isPuzzleVerified) {
       toast({
-        title: "Captcha Required",
-        description: "Please complete the captcha verification",
+        title: "Verification Required",
+        description: "Please solve the math puzzle to verify you're human",
         variant: "destructive",
       })
       return
@@ -110,12 +110,12 @@ export function UrlShortener() {
           />
         </div>
 
-        {!isLoggedIn && <Captcha onVerify={(verified) => setIsCaptchaVerified(verified)} />}
+        {!isLoggedIn && <MathPuzzle onVerify={(verified) => setIsPuzzleVerified(verified)} />}
 
         <Button
           type="submit"
           className="w-full h-12 text-base"
-          disabled={isLoading || !url || (!isLoggedIn && !isCaptchaVerified)}
+          disabled={isLoading || !url || (!isLoggedIn && !isPuzzleVerified)}
         >
           {isLoading ? "Creating..." : "Create Smart Link"}
         </Button>

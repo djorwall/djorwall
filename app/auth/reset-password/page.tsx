@@ -2,26 +2,32 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
+import { resetPassword } from "@/app/actions/auth"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { resetPassword } from "@/app/actions/auth"
-import { Loader2, CheckCircle2, XCircle, AlertCircle } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import Link from "next/link"
+import { Navbar } from "@/components/navbar"
+import { CheckCircle2, XCircle } from "lucide-react"
+import { isValidRedirectUrl } from "@/lib/utils/auth"
 
 export default function ResetPasswordPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
-  const [isTokenValid, setIsTokenValid] = useState<boolean | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [isTokenValid, setIsTokenValid] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Get the redirect URL from the query parameters
+  const redirectTo = searchParams.get("redirectTo") || "/login"
+
+  // Validate the redirect URL for security
+  const safeRedirectUrl = isValidRedirectUrl(redirectTo) ? redirectTo : "/login"
 
   useEffect(() => {
     // Check if token exists
@@ -59,6 +65,7 @@ export default function ResetPasswordPage() {
       // Add token to formData
       formData.append("token_hash", searchParams.get("token_hash") || "")
       formData.append("type", searchParams.get("type") || "")
+      formData.append("redirectTo", safeRedirectUrl)
 
       const result = await resetPassword(formData)
 
@@ -69,11 +76,13 @@ export default function ResetPasswordPage() {
           description: "Your password has been reset successfully.",
         })
 
-        // Redirect to login after 3 seconds
+        // Redirect to the specified URL or login page
+        const redirectUrl =
+          result.redirectTo || `/login?message=Your password has been reset successfully. You can now log in.`
+
+        // Redirect after 3 seconds
         setTimeout(() => {
-          router.push(
-            "/login?message=Your password has been reset successfully. You can now log in with your new password.",
-          )
+          router.push(redirectUrl)
         }, 3000)
       } else {
         setError(result.message || "Failed to reset password. Please try again.")
@@ -96,101 +105,80 @@ export default function ResetPasswordPage() {
     }
   }
 
-  if (isTokenValid === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center justify-center py-6">
-            <Loader2 className="h-12 w-12 text-primary animate-spin" />
-            <p className="mt-4 text-center text-muted-foreground">Verifying your reset link...</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  if (isTokenValid === false) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Invalid Reset Link</CardTitle>
-            <CardDescription>There was a problem with your password reset link</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center py-6">
-            <XCircle className="h-12 w-12 text-destructive" />
-            <p className="mt-4 text-center text-muted-foreground">{error}</p>
-          </CardContent>
-          <CardFooter>
-            <Button asChild className="w-full">
-              <Link href="/forgot-password">Request New Reset Link</Link>
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    )
-  }
-
-  if (isSuccess) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold">Password Reset Successful</CardTitle>
-            <CardDescription>Your password has been updated</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center py-6">
-            <CheckCircle2 className="h-12 w-12 text-green-500" />
-            <p className="mt-4 text-center">Your password has been reset successfully.</p>
-            <p className="text-center text-muted-foreground">Redirecting you to the login page...</p>
-          </CardContent>
-          <CardFooter>
-            <Button asChild className="w-full">
-              <Link href="/login">Go to Login</Link>
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Reset Your Password</CardTitle>
-          <CardDescription>Enter a new password for your account</CardDescription>
-        </CardHeader>
-        {error && (
-          <Alert className="mx-6 mb-4 border-red-200 bg-red-50 text-red-800">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
-              <Input id="password" name="password" type="password" required />
-              <p className="text-xs text-muted-foreground">Password must be at least 6 characters long</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm New Password</Label>
-              <Input id="confirm-password" name="confirm-password" type="password" required />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button className="w-full" type="submit" disabled={isLoading}>
-              {isLoading ? "Resetting Password..." : "Reset Password"}
-            </Button>
-            <div className="text-center text-sm">
-              <Link href="/login" className="text-primary hover:underline">
-                Back to login
-              </Link>
-            </div>
-          </CardFooter>
-        </form>
-      </Card>
+    <div className="min-h-screen flex flex-col bg-[#F9FAFB]">
+      <Navbar />
+
+      <main className="flex-1 flex items-center justify-center p-6">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
+            <CardDescription>Enter your new password below</CardDescription>
+          </CardHeader>
+          {!isTokenValid ? (
+            <>
+              <CardContent className="flex flex-col items-center justify-center py-6 space-y-6">
+                <div className="rounded-full bg-red-100 p-3">
+                  <XCircle className="h-12 w-12 text-red-600" />
+                </div>
+                <div className="text-center space-y-2">
+                  <p className="font-medium text-xl">Invalid Reset Link</p>
+                  <p className="text-muted-foreground">{error}</p>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button asChild className="w-full">
+                  <a href="/forgot-password">Request New Reset Link</a>
+                </Button>
+              </CardFooter>
+            </>
+          ) : isSuccess ? (
+            <>
+              <CardContent className="flex flex-col items-center justify-center py-6 space-y-6">
+                <div className="rounded-full bg-green-100 p-3">
+                  <CheckCircle2 className="h-12 w-12 text-green-600" />
+                </div>
+                <div className="text-center space-y-2">
+                  <p className="font-medium text-xl">Password Reset Successful</p>
+                  <p className="text-muted-foreground">
+                    Your password has been reset successfully. You will be redirected to the login page in a few
+                    seconds.
+                  </p>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button asChild className="w-full">
+                  <a
+                    href={`/login${safeRedirectUrl !== "/login" ? `?redirectTo=${encodeURIComponent(safeRedirectUrl)}` : ""}`}
+                  >
+                    Go to Login
+                  </a>
+                </Button>
+              </CardFooter>
+            </>
+          ) : (
+            <>
+              <form onSubmit={handleSubmit}>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password">New Password</Label>
+                    <Input id="password" name="password" type="password" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirm New Password</Label>
+                    <Input id="confirm-password" name="confirm-password" type="password" required />
+                  </div>
+                </CardContent>
+                <CardFooter className="flex flex-col space-y-4">
+                  <Button className="w-full" type="submit" disabled={isLoading}>
+                    {isLoading ? "Resetting Password..." : "Reset Password"}
+                  </Button>
+                </CardFooter>
+              </form>
+            </>
+          )}
+        </Card>
+      </main>
       <Toaster />
     </div>
   )

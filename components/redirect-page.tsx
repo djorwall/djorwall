@@ -16,11 +16,35 @@ export function RedirectPage({ shortId, originalUrl, androidUrl, iosUrl, fallbac
   const [countdown, setCountdown] = useState(5)
   const [isRedirecting, setIsRedirecting] = useState(false)
 
+  // Determine the redirect URL based on platform
+  const getRedirectUrl = () => {
+    const userAgent = navigator.userAgent.toLowerCase()
+
+    if (/android/i.test(userAgent) && androidUrl) {
+      return androidUrl
+    } else if (/iphone|ipad|ipod/i.test(userAgent) && iosUrl) {
+      return iosUrl
+    }
+
+    return fallbackUrl || originalUrl
+  }
+
+  const handleRedirect = () => {
+    setIsRedirecting(true)
+
+    // Redirect after a short delay
+    setTimeout(() => {
+      window.location.href = getRedirectUrl()
+    }, 500)
+  }
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer)
+          // Automatically redirect when countdown reaches zero
+          handleRedirect()
           return 0
         }
         return prev - 1
@@ -28,64 +52,45 @@ export function RedirectPage({ shortId, originalUrl, androidUrl, iosUrl, fallbac
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [])
-
-  const handleRedirect = () => {
-    setIsRedirecting(true)
-
-    // Detect platform and redirect accordingly
-    const userAgent = navigator.userAgent.toLowerCase()
-    let redirectUrl = fallbackUrl // Default fallback URL
-
-    if (/android/i.test(userAgent) && androidUrl) {
-      // Android intent
-      redirectUrl = androidUrl
-    } else if (/iphone|ipad|ipod/i.test(userAgent) && iosUrl) {
-      // iOS scheme
-      redirectUrl = iosUrl
-    }
-
-    // Redirect after a short delay
-    setTimeout(() => {
-      window.location.href = redirectUrl
-    }, 500)
-  }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      {/* Ad Block */}
-      <div className="w-full p-4 bg-gray-100 border-b text-center">
-        <div className="max-w-3xl mx-auto h-24 flex items-center justify-center bg-gray-200 rounded">
-          <p className="text-muted-foreground">Advertisement Space</p>
-        </div>
-      </div>
+      <main className="flex-1 flex flex-col items-center p-4 md:p-6 space-y-6">
+        <div className="w-full max-w-xl">
+          <h1 className="text-2xl font-bold mb-4 text-center">Your link is ready</h1>
 
-      <main className="flex-1 flex flex-col items-center justify-center p-6">
-        <div className="w-full max-w-md text-center space-y-8">
-          <div>
-            <h1 className="text-2xl font-bold mb-2">Your link is ready</h1>
-            <p className="text-muted-foreground">You will be redirected to your destination</p>
-          </div>
-
-          <div className="flex flex-col items-center">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <span className="text-2xl font-bold text-primary">{countdown}</span>
+          {/* Ad Space - 1:1 Aspect Ratio */}
+          <div className="w-full relative mb-6">
+            <div className="aspect-square w-full bg-gray-100 border rounded-lg flex items-center justify-center">
+              <p className="text-muted-foreground text-center p-4">Advertisement Space</p>
             </div>
-            <p className="text-sm text-muted-foreground">{countdown > 0 ? "Redirecting in..." : "Ready to proceed"}</p>
           </div>
 
-          <Button size="lg" className="w-full" disabled={countdown > 0 || isRedirecting} onClick={handleRedirect}>
-            {isRedirecting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Redirecting...
-              </>
-            ) : (
-              "GO"
-            )}
-          </Button>
+          {/* Countdown and Button - Below Ad */}
+          <div className="w-full flex flex-col items-center space-y-4">
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                <span className="text-xl font-bold text-primary">{countdown}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {isRedirecting ? "Redirecting you now..." : `Redirecting in ${countdown} seconds`}
+              </p>
+            </div>
 
-          <p className="text-xs text-muted-foreground">Link ID: {shortId}</p>
+            <Button size="lg" className="w-full max-w-xs" disabled={isRedirecting} onClick={handleRedirect}>
+              {isRedirecting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Redirecting...
+                </>
+              ) : (
+                "Continue Now"
+              )}
+            </Button>
+
+            <p className="text-xs text-muted-foreground text-center">Link ID: {shortId}</p>
+          </div>
         </div>
       </main>
     </div>

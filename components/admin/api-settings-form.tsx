@@ -13,11 +13,13 @@ import { getApiSettings, updateApiSettings } from "@/app/actions/admin"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ExternalLink } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // Define the form schema for reCAPTCHA settings
 const recaptchaFormSchema = z.object({
   siteKey: z.string().min(1, "Site key is required"),
   secretKey: z.string().min(1, "Secret key is required"),
+  version: z.enum(["v2", "v3", "invisible"]).default("v2"),
 })
 
 type RecaptchaFormValues = z.infer<typeof recaptchaFormSchema>
@@ -26,6 +28,7 @@ type RecaptchaFormValues = z.infer<typeof recaptchaFormSchema>
 const defaultRecaptchaValues: RecaptchaFormValues = {
   siteKey: "",
   secretKey: "",
+  version: "v2",
 }
 
 interface ApiSettingsFormProps {
@@ -135,6 +138,30 @@ export default function ApiSettingsForm({ type }: ApiSettingsFormProps) {
                       <Input placeholder="Enter secret key" type="password" {...field} />
                     </FormControl>
                     <FormDescription>The private key used for server-side verification.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="version"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>reCAPTCHA Version</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select reCAPTCHA version" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="v2">reCAPTCHA v2 Checkbox</SelectItem>
+                        <SelectItem value="invisible">reCAPTCHA v2 Invisible</SelectItem>
+                        <SelectItem value="v3">reCAPTCHA v3</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>Select the version that matches your reCAPTCHA site key type.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

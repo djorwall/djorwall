@@ -4,13 +4,17 @@ import { Button } from "@/components/ui/button"
 import { signInWithGoogle } from "@/app/actions/auth"
 import { useState } from "react"
 
-export function GoogleButton() {
+interface GoogleButtonProps {
+  redirectTo?: string
+}
+
+export function GoogleButton({ redirectTo = "/dashboard" }: GoogleButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     try {
-      const result = await signInWithGoogle()
+      const result = await signInWithGoogle(redirectTo)
 
       if (result.success && result.url) {
         window.location.href = result.url
