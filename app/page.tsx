@@ -1,72 +1,63 @@
-import { Smartphone, ExternalLink, BarChart3 } from "lucide-react"
-import { Navbar } from "@/components/navbar"
 import { UrlShortener } from "@/components/url-shortener"
 import { FeatureCard } from "@/components/feature-card"
+import { checkUserAuthenticated } from "@/lib/supabase/auth"
+import { redirect } from "next/navigation"
+import { ArrowRight, BarChart3, Lock, Smartphone } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
-export default function Home() {
+export default async function HomePage() {
+  // Check if user is authenticated
+  const isAuthenticated = await checkUserAuthenticated()
+
+  // If authenticated, redirect to dashboard
+  if (isAuthenticated) {
+    redirect("/dashboard")
+  }
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#F9FAFB]">
-      <Navbar />
-
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="py-16 md:py-24">
-          <div className="container text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Smart Links for <span className="text-primary">Native Apps</span>
-            </h1>
-            <p className="text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">
-              Create shortened smart deeplinks that open in native apps with integrated analytics
-            </p>
-
-            <UrlShortener />
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section className="py-16 bg-white border-t">
-          <div className="container">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <FeatureCard
-                icon={Smartphone}
-                title="Smart App Detection"
-                description="Automatically opens in native apps when installed on user devices"
-              />
-              <FeatureCard
-                icon={ExternalLink}
-                title="Browser Fallback"
-                description="Seamlessly redirects to web version when native app isn't available"
-                iconColor="text-accent"
-              />
-              <FeatureCard
-                icon={BarChart3}
-                title="Analytics Included"
-                description="Track clicks, devices, locations and more with detailed analytics"
-                iconColor="text-purple-500"
-              />
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="border-t py-6 bg-white">
-        <div className="container">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-sm text-muted-foreground">© 2025 Appopener.io. All rights reserved.</div>
-            <div className="flex gap-6 mt-4 md:mt-0">
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground">
-                Terms
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground">
-                Privacy
-              </a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-foreground">
-                Contact
-              </a>
-            </div>
-          </div>
+    <div className="container max-w-6xl mx-auto py-12">
+      <section className="text-center mb-16">
+        <h1 className="text-4xl md:text-5xl font-bold mb-4">Simplify Your Links</h1>
+        <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+          Create short, memorable links that redirect anywhere on the web.
+        </p>
+        <div className="max-w-md mx-auto">
+          <UrlShortener />
         </div>
-      </footer>
+      </section>
+
+      <section className="mb-16">
+        <h2 className="text-3xl font-bold text-center mb-12">Features</h2>
+        <div className="grid md:grid-cols-3 gap-8">
+          <FeatureCard
+            icon={<BarChart3 className="h-10 w-10" />}
+            title="Analytics"
+            description="Track clicks and visitor data for all your shortened links."
+          />
+          <FeatureCard
+            icon={<Smartphone className="h-10 w-10" />}
+            title="Mobile Detection"
+            description="Redirect users to different destinations based on their device."
+          />
+          <FeatureCard
+            icon={<Lock className="h-10 w-10" />}
+            title="Password Protection"
+            description="Add an extra layer of security to your sensitive links."
+          />
+        </div>
+      </section>
+
+      <section className="text-center bg-gray-50 py-16 rounded-lg">
+        <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
+        <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+          Create an account to manage your links and access all features.
+        </p>
+        <Button size="lg" asChild>
+          <a href="/login">
+            Sign Up Now <ArrowRight className="ml-2 h-4 w-4" />
+          </a>
+        </Button>
+      </section>
     </div>
   )
 }

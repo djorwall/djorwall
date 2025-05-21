@@ -1,6 +1,12 @@
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import type { Database } from "@/lib/supabase/database.types"
 
-export function getSupabaseBrowserClient() {
-  return createClientComponentClient<Database>()
+// Create a singleton instance of the Supabase client
+let supabaseClient: ReturnType<typeof createClientComponentClient<Database>> | null = null
+
+export function createClient() {
+  if (!supabaseClient) {
+    supabaseClient = createClientComponentClient<Database>()
+  }
+  return supabaseClient
 }

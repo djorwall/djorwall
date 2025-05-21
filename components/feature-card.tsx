@@ -1,20 +1,22 @@
-import type { LucideIcon } from "lucide-react"
+import type React from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface FeatureCardProps {
-  icon: LucideIcon
+  icon: React.ReactNode
   title: string
   description: string
-  iconColor?: string
 }
 
-export function FeatureCard({ icon: Icon, title, description, iconColor = "text-primary" }: FeatureCardProps) {
+export function FeatureCard({ icon, title, description }: FeatureCardProps) {
   return (
-    <div className="flex flex-col items-center p-6 text-center bg-white rounded-lg border shadow-sm">
-      <div className={`mb-4 ${iconColor}`}>
-        <Icon className="h-8 w-8" />
-      </div>
-      <h3 className="text-lg font-medium mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground">{description}</p>
-    </div>
+    <Card className="transition-all hover:shadow-lg">
+      <CardHeader>
+        <div className="text-primary mb-2">{icon}</div>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <CardDescription>{description}</CardDescription>
+      </CardContent>
+    </Card>
   )
 }

@@ -1,98 +1,177 @@
 "use client"
 
-import type React from "react"
-import { useSearchParams } from "next/navigation"
-import { signUp } from "@/app/actions/auth"
+import { useState, useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { Navbar } from "@/components/navbar"
 import { Mail } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
-import { GoogleButton } from "@/components/auth/google-button"
-import { isValidRedirectUrl } from "@/lib/utils/auth"
+import { initOtpless, otplessConfig, type OtplessResponse } from "@/lib/otpless/client"
+import { authConfig } from "@/lib/auth/auth-config"
+
+// Declare global function for OTPless callback
+declare global {
+  interface Window {
+    otplessCallback?: (response: OtplessResponse) => void
+    handleOtplessSuccess?: (response: OtplessResponse) => void
+    handleOtplessError?: (error: string) => void
+  }
+}
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
-  const [email, setEmail] = useState("")
+  const [userIdentifier, setUserIdentifier] = useState("")
+  const [termsAccepted, setTermsAccepted] = useState(false)
 
   const searchParams = useSearchParams()
+  const router = useRouter()
+
   const redirectTo = searchParams.get("redirectTo") || "/dashboard"
 
-  // Validate the redirect URL for security
-  const safeRedirectUrl = isValidRedirectUrl(redirectTo) ? redirectTo : "/dashboard"
+  // Initialize OTPless SDK
+  useEffect(() => {
+    initOtpless()
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
+    // Define success callback
+    window.handleOtplessSuccess = (response) => {
+      if (response.data?.token) {
+        if (!termsAccepted) {
+          toast({
+            title: "Error",
+            description: "Please accept the terms of service and privacy policy.",
+            variant: "destructive",
+          })
+          setIsLoading(false)
+          return
+        }
 
-    try {
-      const formData = new FormData(e.currentTarget)
-      const emailValue = formData.get("email") as string
-      setEmail(emailValue)
+        setIsLoading(true)
 
-      // Check if passwords match
-      const password = formData.get("password") as string
-      const confirmPassword = formData.get("confirm-password") as string
+        // Get user identifier
+        const identifier =
+          response.data.email ||
+          (response.data.mobile?.number ? `+${response.data.mobile.prefix}${response.data.mobile.number}` : null)
 
-      if (password !== confirmPassword) {
-        toast({
-          title: "Error",
-          description: "Passwords do not match",
-          variant: "destructive",
-        })
-        setIsLoading(false)
-        return
-      }
+        if (identifier) {
+          setUserIdentifier(identifier)
+        }
 
-      // Add the redirect URL to the form data
-      formData.append("redirectTo", safeRedirectUrl)
-
-      const result = await signUp(formData)
-
-      if (result.success) {
-        setIsSuccess(true)
-        toast({
-          title: "Success",
-          description: "Account created successfully. Please check your email for verification.",
-        })
-
-        // Reset the form
-        e.currentTarget.reset()
+        // Redirect to callback route with token
+        const callbackUrl = `/auth/otpless/callback?token=${response.data.token}&redirectTo=${encodeURIComponent(redirectTo)}`
+        router.push(callbackUrl)
       } else {
         toast({
           title: "Error",
-          description: result.message || "Failed to create account. Please try again.",
+          description: "Failed to authenticate. Please try again.",
           variant: "destructive",
         })
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error("Error signing up:", error)
+    }
+
+    // Define error callback
+    window.handleOtplessError = (error) => {
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: error || "Authentication failed. Please try again.",
         variant: "destructive",
       })
-    } finally {
+      setIsLoading(false)
+    }
+
+    // Define main callback
+    window.otplessCallback = (response) => {
+      if (response.data) {
+        if (window.handleOtplessSuccess) {
+          window.handleOtplessSuccess(response)
+        }
+      } else if (response.error) {
+        if (window.handleOtplessError) {
+          window.handleOtplessError(response.error)
+        }
+      }
+    }
+
+    return () => {
+      // Clean up callbacks
+      delete window.otplessCallback
+      delete window.handleOtplessSuccess
+      delete window.handleOtplessError
+    }
+  }, [router, redirectTo, termsAccepted])
+
+  // Handle OTPless signup
+  const handleOtplessSignup = () => {
+    if (!termsAccepted) {
+      toast({
+        title: "Error",
+        description: "Please accept the terms of service and privacy policy.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsLoading(true)
+
+    // Check if OTPless SDK is loaded
+    if (typeof window.otpless !== "function") {
+      toast({
+        title: "Error",
+        description: "OTPless SDK not loaded. Please refresh the page and try again.",
+        variant: "destructive",
+      })
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      // Call OTPless SDK
+      window.otpless({
+        method: otplessConfig.methods,
+        callback: otplessConfig.callbackName,
+      })
+    } catch (error) {
+      console.error("Error initializing OTPless:", error)
+      toast({
+        title: "Error",
+        description: "Failed to initialize authentication. Please try again.",
+        variant: "destructive",
+      })
       setIsLoading(false)
     }
   }
 
+  // Handle signup
+  const handleSignup = () => {
+    setIsLoading(true)
+
+    // Simulate signup process
+    setTimeout(() => {
+      toast({
+        title: "Success",
+        description: "Your account has been created successfully.",
+      })
+
+      // Redirect to the specified URL
+      router.push(redirectTo)
+    }, 1500)
+  }
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#F9FAFB]">
+    <div className="min-h-screen flex flex-col bg-gray-100">
       <Navbar />
 
       <main className="flex-1 flex items-center justify-center p-6">
         {isSuccess ? (
           <Card className="w-full max-w-md">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold">Check your email</CardTitle>
+              <CardTitle className="text-2xl font-bold">Check your inbox</CardTitle>
               <CardDescription>Verification email sent</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center py-6 space-y-6">
@@ -101,7 +180,7 @@ export default function SignupPage() {
               </div>
               <div className="text-center space-y-2">
                 <p className="font-medium">We've sent a verification email to:</p>
-                <p className="font-bold">{email}</p>
+                <p className="font-bold">{userIdentifier}</p>
                 <p className="text-sm text-muted-foreground mt-2">
                   Please check your email and click on the verification link to complete your registration.
                 </p>
@@ -126,46 +205,82 @@ export default function SignupPage() {
         ) : (
           <Card className="w-full max-w-md">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-              <CardDescription>Enter your information to create an account</CardDescription>
+              <CardTitle className="text-2xl font-bold">Sign Up</CardTitle>
+              <CardDescription>
+                {authConfig.enabled
+                  ? "Create an account to get started"
+                  : "Authentication is currently disabled for testing"}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <GoogleButton redirectTo={safeRedirectUrl} />
+              {!authConfig.enabled && (
+                <div
+                  className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded relative"
+                  role="alert"
+                >
+                  <strong className="font-bold">Testing Mode: </strong>
+                  <span className="block sm:inline">
+                    Authentication is disabled. Click the button below to simulate signup.
+                  </span>
+                </div>
+              )}
 
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-                </div>
-              </div>
+              <Button
+                onClick={authConfig.enabled ? handleOtplessSignup : handleSignup}
+                className="w-full bg-green-600 hover:bg-green-700"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M3.9 12C3.9 10.29 5.29 8.9 7 8.9H11V7H7C4.24 7 2 9.24 2 12C2 14.76 4.24 17 7 17H11V15.1H7C5.29 15.1 3.9 13.71 3.9 12ZM8 13H16V11H8V13ZM17 7H13V8.9H17C18.71 8.9 20.1 10.29 20.1 12C20.1 13.71 18.71 15.1 17 15.1H13V17H17C19.76 17 22 14.76 22 12C22 9.24 19.76 7 17 7Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    {authConfig.enabled ? "Sign up with OTPless" : "Sign Up"}
+                  </span>
+                )}
+              </Button>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="first-name">First name</Label>
-                    <Input id="first-name" name="first-name" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="last-name">Last name</Label>
-                    <Input id="last-name" name="last-name" required />
-                  </div>
+              {authConfig.enabled && (
+                <div className="text-center text-sm text-muted-foreground">
+                  <p>Sign up securely with WhatsApp, Email, or SMS</p>
+                  <p className="mt-1">No passwords or OTPs required</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" name="email" type="email" placeholder="m@example.com" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input id="password" name="password" type="password" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm password</Label>
-                  <Input id="confirm-password" name="confirm-password" type="password" required />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="terms" name="terms" required />
+              )}
+
+              {authConfig.enabled && (
+                <div className="flex items-center space-x-2 mt-4">
+                  <Checkbox
+                    id="terms"
+                    checked={termsAccepted}
+                    onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                  />
                   <Label htmlFor="terms" className="text-sm">
                     I agree to the{" "}
                     <Link href="/terms" className="text-primary hover:underline">
@@ -177,10 +292,7 @@ export default function SignupPage() {
                     </Link>
                   </Label>
                 </div>
-                <Button className="w-full" type="submit" disabled={isLoading}>
-                  {isLoading ? "Creating account..." : "Create account"}
-                </Button>
-              </form>
+              )}
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
               <div className="text-center text-sm">

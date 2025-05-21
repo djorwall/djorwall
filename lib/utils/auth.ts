@@ -9,9 +9,9 @@ export function isValidRedirectUrl(url: string): boolean {
   try {
     // Check if it's a relative URL (starts with /)
     if (url.startsWith("/")) {
-      // Don't allow redirects to authentication pages to prevent loops
-      const authPaths = ["/login", "/signup", "/auth/"]
-      return !authPaths.some((path) => url.startsWith(path))
+      // Check if it's in the allowed list
+      const allowedPaths = ["/dashboard", "/admin"]
+      return allowedPaths.some((allowedPath) => url === allowedPath || url.startsWith(`${allowedPath}/`))
     }
 
     // If it's an absolute URL, check if it's for our domain
@@ -24,4 +24,14 @@ export function isValidRedirectUrl(url: string): boolean {
     console.error("Error validating redirect URL:", error)
     return false
   }
+}
+
+/**
+ * Gets a safe redirect URL
+ * @param url The URL to validate
+ * @returns A safe URL to redirect to
+ */
+export function getSafeRedirectUrl(url: string | null | undefined): string {
+  if (!url) return "/dashboard"
+  return isValidRedirectUrl(url) ? url : "/dashboard"
 }

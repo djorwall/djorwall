@@ -1,50 +1,42 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
 interface RedirectPageProps {
+  url: string
   shortId: string
-  originalUrl: string
-  androidUrl: string | null
-  iosUrl: string | null
-  fallbackUrl: string
 }
 
-export function RedirectPage({ shortId, originalUrl, androidUrl, iosUrl, fallbackUrl }: RedirectPageProps) {
-  const [countdown, setCountdown] = useState(5)
-  const [isRedirecting, setIsRedirecting] = useState(false)
-
-  // Determine the redirect URL based on platform
-  const getRedirectUrl = () => {
-    const userAgent = navigator.userAgent.toLowerCase()
-
-    if (/android/i.test(userAgent) && androidUrl) {
-      return androidUrl
-    } else if (/iphone|ipad|ipod/i.test(userAgent) && iosUrl) {
-      return iosUrl
-    }
-
-    return fallbackUrl || originalUrl
-  }
-
-  const handleRedirect = () => {
-    setIsRedirecting(true)
-
-    // Redirect after a short delay
-    setTimeout(() => {
-      window.location.href = getRedirectUrl()
-    }, 500)
-  }
+export function RedirectPage({ url, shortId }: RedirectPageProps) {
+  const [countdown, setCountdown] = useState(3)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // Record the click
+    const recordClick = async () => {
+      try {
+        await fetch(`/api/links/${shortId}/click`, {
+          method: "POST",
+        })
+      } catch (err) {
+        console.error("Error recording click:", err)
+      }
+    }
+
+    recordClick()
+
+    // Start countdown
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer)
-          // Automatically redirect when countdown reaches zero
-          handleRedirect()
+          try {
+            window.location.href = url
+          } catch (err) {
+            setError("Invalid redirect URL. Please check the link and try again.")
+          }
           return 0
         }
         return prev - 1
@@ -52,47 +44,27 @@ export function RedirectPage({ shortId, originalUrl, androidUrl, iosUrl, fallbac
     }, 1000)
 
     return () => clearInterval(timer)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [url, shortId])
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <main className="flex-1 flex flex-col items-center p-4 md:p-6 space-y-6">
-        <div className="w-full max-w-xl">
-          <h1 className="text-2xl font-bold mb-4 text-center">Your link is ready</h1>
-
-          {/* Ad Space - 1:1 Aspect Ratio */}
-          <div className="w-full relative mb-6">
-            <div className="aspect-square w-full bg-gray-100 border rounded-lg flex items-center justify-center">
-              <p className="text-muted-foreground text-center p-4">Advertisement Space</p>
-            </div>
-          </div>
-
-          {/* Countdown and Button - Below Ad */}
-          <div className="w-full flex flex-col items-center space-y-4">
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                <span className="text-xl font-bold text-primary">{countdown}</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {isRedirecting ? "Redirecting you now..." : `Redirecting in ${countdown} seconds`}
-              </p>
-            </div>
-
-            <Button size="lg" className="w-full max-w-xs" disabled={isRedirecting} onClick={handleRedirect}>
-              {isRedirecting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Redirecting...
-                </>
-              ) : (
-                "Continue Now"
-              )}
-            </Button>
-
-            <p className="text-xs text-muted-foreground text-center">Link ID: {shortId}</p>
-          </div>
-        </div>
-      </main>
+    <div className="container max-w-md mx-auto py-12">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">Redirecting you</CardTitle>
+          <CardDescription>You are being redirected to the destination</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center py-8">
+          {error ? (
+            <div className="text-red-500">{error}</div>
+          ) : (
+            <>
+              <LoadingSpinner size="lg" className="mb-4" />
+              <p className="text-gray-600 mb-2">Redirecting in {countdown} seconds...</p>
+              <p className="text-sm text-gray-500 truncate max-w-full">Destination: {url}</p>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

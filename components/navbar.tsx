@@ -3,22 +3,43 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { SmartphoneIcon as MobileIcon } from "lucide-react"
-import { useEffect, useState } from "react"
-import { getSupabaseBrowserClient } from "@/lib/supabase/client"
+import { SmartphoneIcon } from "lucide-react"
+import { useState, useEffect } from "react"
+import { createClientComponent } from "@/lib/supabase/auth"
 import { signOut } from "@/app/actions/auth"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { User } from "lucide-react"
 
 export function Navbar() {
   const pathname = usePathname()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [username, setUsername] = useState("")
 
+  // Check if user is logged in
   useEffect(() => {
     const checkAuth = async () => {
-      const supabase = getSupabaseBrowserClient()
-      const { data } = await supabase.auth.getSession()
-      setIsLoggedIn(!!data.session)
-      setIsLoading(false)
+      try {
+        const supabase = createClientComponent()
+        const { data } = await supabase.auth.getSession()
+        setIsLoggedIn(!!data.session)
+
+        if (data.session?.user) {
+          const { data: userData } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", data.session.user.id)
+            .single()
+
+          if (userData?.full_name) {
+            setUsername(userData.full_name)
+          }
+        }
+      } catch (error) {
+        console.error("Error checking auth:", error)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
     checkAuth()
@@ -28,7 +49,7 @@ export function Navbar() {
     <header className="border-b bg-white">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
-          <MobileIcon className="h-6 w-6 text-primary" />
+          <SmartphoneIcon className="h-6 w-6 text-primary" />
           <Link href="/" className="text-xl font-bold text-primary">
             Appopener.io
           </Link>
@@ -36,6 +57,14 @@ export function Navbar() {
         <nav className="hidden md:flex items-center gap-6">
           {!isLoading && (
             <>
+              <Link
+                href="/"
+                className={`text-sm font-medium ${
+                  pathname === "/" ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Home
+              </Link>
               {isLoggedIn ? (
                 <>
                   <Link
@@ -46,26 +75,32 @@ export function Navbar() {
                   >
                     Dashboard
                   </Link>
-                  <form action={signOut}>
-                    <Button variant="outline" type="submit">
-                      Logout
-                    </Button>
-                  </form>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="gap-2">
+                        <User size={16} />
+                        <span className="max-w-[100px] truncate">{username || "Account"}</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard">My Dashboard</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={async () => {
+                          await signOut()
+                        }}
+                        className="text-red-600 cursor-pointer"
+                      >
+                        Sign Out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </>
               ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className={`text-sm font-medium ${
-                      pathname === "/login" ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    Login
-                  </Link>
-                  <Button asChild>
-                    <Link href="/signup">Sign Up</Link>
-                  </Button>
-                </>
+                <Button asChild>
+                  <Link href="/login">Sign In</Link>
+                </Button>
               )}
             </>
           )}

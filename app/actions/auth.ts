@@ -1,12 +1,41 @@
 "use server"
 
-import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { createActionClient, authConfig } from "@/lib/supabase/auth"
 import { revalidatePath } from "next/cache"
-import { cookies } from "next/headers"
-import { createServerActionClient } from "@supabase/auth-helpers-nextjs"
-import type { Database } from "@/lib/supabase/database.types"
-import { isValidRedirectUrl } from "@/lib/utils/auth"
+import { redirect } from "next/navigation"
+
+// Helper function to get a safe redirect URL
+function getSafeRedirectUrl(url: string | null | undefined): string {
+  if (!url) return "/dashboard"
+
+  try {
+    // Check if it's a relative URL (starts with /)
+    if (url.startsWith("/")) {
+      // List of allowed redirect URLs
+      const allowedUrls = [
+        "/dashboard",
+        "/dashboard/links",
+        "/dashboard/analytics",
+        "/dashboard/profile",
+        "/dashboard/settings",
+      ]
+
+      return allowedUrls.some((allowedUrl) => url === allowedUrl || url.startsWith(`${allowedUrl}/`))
+        ? url
+        : "/dashboard"
+    }
+
+    // If it's an absolute URL, check if it's for our domain
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://appopener.io"
+    const siteHostname = new URL(siteUrl).hostname
+    const urlHostname = new URL(url).hostname
+
+    return siteHostname === urlHostname ? url : "/dashboard"
+  } catch (error) {
+    console.error("Error validating redirect URL:", error)
+    return "/dashboard"
+  }
+}
 
 // Sign up a new user
 export async function signUp(formData: FormData) {
@@ -14,7 +43,10 @@ export async function signUp(formData: FormData) {
   const password = formData.get("password") as string
   const firstName = formData.get("first-name") as string
   const lastName = formData.get("last-name") as string
-  const redirectTo = (formData.get("redirectTo") as string) || "/dashboard"
+  const redirectTo = formData.get("redirectTo") as string | undefined
+
+  // Get safe redirect URL
+  const safeRedirectUrl = getSafeRedirectUrl(redirectTo)
 
   if (!email || !password || !firstName || !lastName) {
     return {
@@ -24,7 +56,7 @@ export async function signUp(formData: FormData) {
   }
 
   try {
-    const supabase = createServerActionClient<Database>({ cookies })
+    const supabase = createActionClient()
 
     // Get the site URL from environment variable
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://appopener.io"
@@ -36,9 +68,9 @@ export async function signUp(formData: FormData) {
       options: {
         data: {
           full_name: `${firstName} ${lastName}`,
-          redirect_to: isValidRedirectUrl(redirectTo) ? redirectTo : "/dashboard", // Store the redirect URL in user metadata
+          redirect_to: safeRedirectUrl, // Store the redirect URL in user metadata
         },
-        emailRedirectTo: `${siteUrl}/auth/confirm`,
+        emailRedirectTo: `${siteUrl}${authConfig.pages.verifyEmail}`,
       },
     })
 
@@ -79,10 +111,10 @@ export async function signUp(formData: FormData) {
 export async function signIn(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
-  const redirectTo = (formData.get("redirectTo") as string) || "/dashboard"
+  const redirectTo = formData.get("redirectTo") as string | undefined
 
-  // Validate the redirect URL for security
-  const safeRedirectUrl = isValidRedirectUrl(redirectTo) ? redirectTo : "/dashboard"
+  // Get safe redirect URL
+  const safeRedirectUrl = getSafeRedirectUrl(redirectTo)
 
   if (!email || !password) {
     return {
@@ -92,7 +124,7 @@ export async function signIn(formData: FormData) {
   }
 
   try {
-    const supabase = createServerActionClient<Database>({ cookies })
+    const supabase = createActionClient()
 
     const { error, data } = await supabase.auth.signInWithPassword({
       email,
@@ -133,13 +165,13 @@ export async function signIn(formData: FormData) {
 }
 
 // Sign in with Google
-export async function signInWithGoogle(redirectTo = "/dashboard") {
+export async function signInWithGoogle(redirectTo = authConfig.defaultRedirectUrl) {
   try {
-    const supabase = createServerActionClient<Database>({ cookies })
+    const supabase = createActionClient()
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://appopener.io"
 
-    // Validate the redirect URL for security
-    const safeRedirectUrl = isValidRedirectUrl(redirectTo) ? redirectTo : "/dashboard"
+    // Get safe redirect URL
+    const safeRedirectUrl = getSafeRedirectUrl(redirectTo)
 
     // Create a state parameter with the redirectTo URL
     const state = encodeURIComponent(JSON.stringify({ redirectTo: safeRedirectUrl }))
@@ -179,25 +211,20 @@ export async function signInWithGoogle(redirectTo = "/dashboard") {
 }
 
 // Sign out a user
-export async function signOut(redirectTo = "/") {
-  const supabase = createServerActionClient<Database>({ cookies })
-
+export async function signOut() {
+  const supabase = createActionClient()
   await supabase.auth.signOut()
   revalidatePath("/", "layout")
-
-  // Validate the redirect URL for security
-  const safeRedirectUrl = isValidRedirectUrl(redirectTo) ? redirectTo : "/"
-
-  redirect(safeRedirectUrl)
+  return redirect("/")
 }
 
 // Request password reset
 export async function requestPasswordReset(formData: FormData) {
   const email = formData.get("email") as string
-  const redirectTo = (formData.get("redirectTo") as string) || "/dashboard"
+  const redirectTo = formData.get("redirectTo") as string | undefined
 
-  // Validate the redirect URL for security
-  const safeRedirectUrl = isValidRedirectUrl(redirectTo) ? redirectTo : "/dashboard"
+  // Get safe redirect URL
+  const safeRedirectUrl = getSafeRedirectUrl(redirectTo)
 
   if (!email) {
     return {
@@ -207,13 +234,13 @@ export async function requestPasswordReset(formData: FormData) {
   }
 
   try {
-    const supabase = createServerActionClient<Database>({ cookies })
+    const supabase = createActionClient()
 
     // Get the site URL from environment variable
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://appopener.io"
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${siteUrl}/auth/reset-password?redirectTo=${encodeURIComponent(safeRedirectUrl)}`,
+      redirectTo: `${siteUrl}${authConfig.pages.resetPassword}?redirectTo=${encodeURIComponent(safeRedirectUrl)}`,
     })
 
     if (error) {
@@ -242,10 +269,10 @@ export async function resetPassword(formData: FormData) {
   const password = formData.get("password") as string
   const tokenHash = formData.get("token_hash") as string
   const type = formData.get("type") as string
-  const redirectTo = (formData.get("redirectTo") as string) || "/login"
+  const redirectTo = formData.get("redirectTo") as string | undefined
 
-  // Validate the redirect URL for security
-  const safeRedirectUrl = isValidRedirectUrl(redirectTo) ? redirectTo : "/login"
+  // Get safe redirect URL
+  const safeRedirectUrl = getSafeRedirectUrl(redirectTo)
 
   if (!password) {
     return {
@@ -262,7 +289,7 @@ export async function resetPassword(formData: FormData) {
   }
 
   try {
-    const supabase = createServerActionClient<Database>({ cookies })
+    const supabase = createActionClient()
 
     // Verify the token and update the password
     const { error } = await supabase.auth.verifyOtp({
@@ -295,7 +322,7 @@ export async function resetPassword(formData: FormData) {
 
 // Get the current user
 export async function getCurrentUser() {
-  const supabase = getSupabaseServerClient()
+  const supabase = createActionClient()
 
   const {
     data: { session },
@@ -311,4 +338,10 @@ export async function getCurrentUser() {
     ...session.user,
     profile,
   }
+}
+
+// Check if the current user is authenticated
+export async function isAuthenticated() {
+  const user = await getCurrentUser()
+  return user !== null
 }

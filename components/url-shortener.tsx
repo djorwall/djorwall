@@ -1,161 +1,125 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { MathPuzzle } from "@/components/math-puzzle"
-import { Copy, ExternalLink, Smartphone, LogIn } from "lucide-react"
+import { Label } from "@/components/ui/label"
 import { toast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
-import { createLink } from "@/app/actions/links"
-import { getSupabaseBrowserClient } from "@/lib/supabase/client"
-import Link from "next/link"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
 export function UrlShortener() {
+  const router = useRouter()
   const [url, setUrl] = useState("")
-  const [shortUrl, setShortUrl] = useState("")
-  const [isPuzzleVerified, setIsPuzzleVerified] = useState(false)
+  const [shortUrl, setShortUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = getSupabaseBrowserClient()
-      const { data } = await supabase.auth.getSession()
-      setIsLoggedIn(!!data.session)
-      setIsCheckingAuth(false)
-    }
-
-    checkAuth()
-  }, [])
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!url) {
-      toast({
-        title: "Error",
-        description: "Please enter a URL",
-        variant: "destructive",
-      })
+      setError("Please enter a URL")
       return
     }
 
-    if (!isLoggedIn && !isPuzzleVerified) {
-      toast({
-        title: "Verification Required",
-        description: "Please solve the math puzzle to verify you're human",
-        variant: "destructive",
-      })
+    // Basic URL validation
+    try {
+      new URL(url)
+    } catch (err) {
+      setError("Please enter a valid URL")
       return
     }
 
     setIsLoading(true)
+    setError(null)
 
     try {
-      const formData = new FormData()
-      formData.append("url", url)
-
-      const result = await createLink(formData)
-
-      if (result.success && result.data) {
-        setShortUrl(result.data.shortUrl)
-        toast({
-          title: "Success!",
-          description: "Your smart link has been created",
-        })
-      } else {
-        toast({
-          title: "Error",
-          description: result.message || "Failed to create link. Please try again.",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error("Error creating link:", error)
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
+      const response = await fetch("/api/links", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url }),
       })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create short link")
+      }
+
+      const shortUrl = `${window.location.origin}/${data.shortId}`
+      setShortUrl(shortUrl)
+
+      toast({
+        title: "Link created!",
+        description: "Your shortened URL has been created successfully.",
+      })
+    } catch (err) {
+      console.error("Error creating short link:", err)
+      setError(err instanceof Error ? err.message : "An unexpected error occurred")
     } finally {
       setIsLoading(false)
     }
   }
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(shortUrl)
-    toast({
-      title: "Copied!",
-      description: "Link copied to clipboard",
-    })
-  }
-
-  if (isCheckingAuth) {
-    return <div className="w-full max-w-md mx-auto text-center">Loading...</div>
+    if (shortUrl) {
+      navigator.clipboard.writeText(shortUrl)
+      toast({
+        title: "Copied!",
+        description: "The shortened URL has been copied to your clipboard.",
+      })
+    }
   }
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Input
-            type="url"
-            placeholder="Paste any link"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="h-12 text-base"
-          />
-        </div>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle className="text-2xl font-bold">Shorten Your URL</CardTitle>
+        <CardDescription>Enter a long URL to create a short, shareable link</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="url">URL to shorten</Label>
+            <Input
+              id="url"
+              type="url"
+              placeholder="https://example.com/very/long/url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              disabled={isLoading}
+            />
+            {error && <p className="text-sm text-red-500">{error}</p>}
+          </div>
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? <LoadingSpinner size="sm" className="mr-2" /> : null}
+            {isLoading ? "Creating..." : "Create Short Link"}
+          </Button>
+        </form>
 
-        {!isLoggedIn && <MathPuzzle onVerify={(verified) => setIsPuzzleVerified(verified)} />}
-
-        <Button
-          type="submit"
-          className="w-full h-12 text-base"
-          disabled={isLoading || !url || (!isLoggedIn && !isPuzzleVerified)}
-        >
-          {isLoading ? "Creating..." : "Create Smart Link"}
-        </Button>
-
-        {!isLoggedIn && (
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground mb-2">Create an account for more features</p>
-            <Button variant="outline" asChild className="w-full">
-              <Link href="/signup" className="flex items-center justify-center gap-2">
-                <LogIn className="h-4 w-4" />
-                <span>Sign up for free</span>
-              </Link>
-            </Button>
+        {shortUrl && (
+          <div className="mt-6 p-4 bg-gray-50 rounded-md">
+            <Label className="text-sm text-gray-500">Your shortened URL</Label>
+            <div className="flex mt-1">
+              <Input value={shortUrl} readOnly className="flex-1" />
+              <Button variant="outline" className="ml-2" onClick={copyToClipboard}>
+                Copy
+              </Button>
+            </div>
           </div>
         )}
-      </form>
-
-      {shortUrl && (
-        <div className="mt-6 p-4 border rounded-lg bg-white">
-          <div className="flex items-center justify-between">
-            <div className="font-medium text-primary truncate mr-2">{shortUrl}</div>
-            <Button variant="ghost" size="icon" onClick={copyToClipboard} title="Copy to clipboard">
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="mt-2 flex items-center text-xs text-muted-foreground">
-            <Smartphone className="h-3 w-3 mr-1" />
-            <span>Opens in native app if installed</span>
-          </div>
-          <div className="mt-3 flex justify-end">
-            <Button variant="outline" size="sm" asChild>
-              <a href={shortUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
-                <span>Open</span>
-                <ExternalLink className="h-3 w-3" />
-              </a>
-            </Button>
-          </div>
-        </div>
-      )}
-      <Toaster />
-    </div>
+      </CardContent>
+      <CardFooter className="flex justify-center border-t pt-4">
+        <Button variant="link" onClick={() => router.push("/login")}>
+          Sign in to manage your links
+        </Button>
+      </CardFooter>
+    </Card>
   )
 }
