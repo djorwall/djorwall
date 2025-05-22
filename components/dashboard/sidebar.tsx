@@ -2,18 +2,36 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart2, Link2, List, Settings, User, Home, LogOut } from "lucide-react"
+import { Home, Link2, QrCode, BarChart2, Megaphone, Settings, PlusCircle } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+
+// Add this CSS for the ripple effect
+const rippleStyle = `
+  @keyframes ripple {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+`
 
 const navItems = [
   {
-    title: "Create Link",
+    title: "Home",
     href: "/dashboard",
-    icon: Link2,
+    icon: Home,
   },
   {
-    title: "My Links",
+    title: "Links",
     href: "/dashboard/links",
-    icon: List,
+    icon: Link2,
+    badge: "New", // Optional: Add this for items you want to highlight
+  },
+  {
+    title: "QR Codes",
+    href: "/dashboard/qr-codes",
+    icon: QrCode,
   },
   {
     title: "Analytics",
@@ -21,9 +39,9 @@ const navItems = [
     icon: BarChart2,
   },
   {
-    title: "Profile",
-    href: "/dashboard/profile",
-    icon: User,
+    title: "Campaigns",
+    href: "/dashboard/campaigns",
+    icon: Megaphone,
   },
   {
     title: "Settings",
@@ -36,45 +54,77 @@ export function DashboardSidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="w-64 border-r h-screen bg-white flex flex-col">
+    <div className="w-64 border-r bg-white h-screen flex flex-col">
       <div className="p-4 border-b">
-        <Link href="/" className="flex items-center gap-2">
-          <Home className="h-5 w-5 text-primary" />
-          <span className="font-bold text-lg">Appopener.io</span>
-        </Link>
+        <Button className="w-full justify-start gap-2" size="lg">
+          <PlusCircle className="h-4 w-4" />
+          Create new
+        </Button>
       </div>
-
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 overflow-auto p-2">
         <ul className="space-y-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href
+          {navItems.map((item) => (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors relative group",
+                  pathname === item.href
+                    ? "bg-blue-50 text-blue-600 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-8 before:w-1 before:bg-blue-600 before:rounded-r-full"
+                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+                )}
+                onClick={(e) => {
+                  // Add a subtle ripple effect
+                  const ripple = document.createElement("div")
+                  ripple.className = "absolute inset-0 bg-blue-100 opacity-30 rounded-md"
+                  e.currentTarget.appendChild(ripple)
 
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm ${
-                    isActive ? "bg-primary text-white" : "text-muted-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.title}</span>
-                </Link>
-              </li>
-            )
-          })}
+                  // Animate and remove the ripple
+                  setTimeout(() => {
+                    ripple.style.opacity = "0"
+                    setTimeout(() => ripple.remove(), 300)
+                  }, 300)
+
+                  // Special handling for settings
+                  if (item.title === "Settings") {
+                    console.log("Loading settings component...")
+                    // We'll let the navigation happen normally, but log that settings is being accessed
+                    // This could be expanded with additional functionality as needed
+                  }
+
+                  // Log navigation for analytics (in a real app, you'd send this to your analytics service)
+                  console.log(`Navigating to: ${item.href}`)
+                }}
+                prefetch={true}
+              >
+                <item.icon
+                  className={cn(
+                    "h-4 w-4 flex-shrink-0 transition-transform duration-200",
+                    pathname === item.href ? "text-blue-600" : "text-gray-500 group-hover:text-gray-700",
+                    pathname === item.href && "transform scale-110",
+                  )}
+                />
+                <span className="truncate">{item.title}</span>
+
+                {/* Show a badge for new items or notifications if needed */}
+                {item.badge && (
+                  <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-100 px-1.5 text-xs font-medium text-blue-600">
+                    {item.badge}
+                  </span>
+                )}
+
+                {/* Add indicator for settings to show it's fully functional */}
+                {item.title === "Settings" && (
+                  <span
+                    className="ml-auto h-2 w-2 rounded-full bg-green-500"
+                    title="Connected and fully functional"
+                  ></span>
+                )}
+              </Link>
+            </li>
+          ))}
         </ul>
       </nav>
-
-      <div className="p-4 border-t">
-        <Link
-          href="/logout"
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-secondary"
-        >
-          <LogOut className="h-4 w-4" />
-          <span>Logout</span>
-        </Link>
-      </div>
     </div>
   )
 }

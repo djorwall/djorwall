@@ -1,40 +1,18 @@
 import type React from "react"
-import { DashboardSidebar } from "@/components/dashboard/sidebar"
-import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { DashboardHeader } from "@/components/dashboard/header"
+import { Sidebar } from "@/components/dashboard/sidebar"
+import { ProtectedRoute } from "@/components/auth/protected-route"
 
-// Flag to enable/disable authentication (set to false for public testing)
-const ENABLE_AUTH = false
-
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  // Check if user is authenticated (only if auth is enabled)
-  if (ENABLE_AUTH) {
-    const supabase = getSupabaseServerClient()
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    if (!session) {
-      // Add a more descriptive redirect
-      return redirect("/login?message=Please sign in to access the dashboard")
-    }
-  }
-
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-[#F9FAFB]">
-      <DashboardSidebar />
-      <main className="flex-1 p-6 overflow-auto">
-        {!ENABLE_AUTH && (
-          <div className="mb-4 p-2 bg-yellow-100 text-yellow-800 rounded-md text-sm">
-            Testing Mode: Authentication is disabled. This page would normally require login.
-          </div>
-        )}
-        {children}
-      </main>
-    </div>
+    <ProtectedRoute>
+      <div className="flex min-h-screen flex-col">
+        <DashboardHeader />
+        <div className="flex flex-1">
+          <Sidebar />
+          <main className="flex-1 bg-gray-50">{children}</main>
+        </div>
+      </div>
+    </ProtectedRoute>
   )
 }

@@ -1,21 +1,20 @@
-import { OtplessLogin } from "@/components/otpless-login"
-import { checkUserAuthenticated } from "@/lib/supabase/auth"
-import { redirect } from "next/navigation"
+import { LoginForm } from "@/components/auth/login-form"
+import type { Metadata } from "next"
 
-export default async function LoginPage() {
-  // Check if user is already authenticated
-  const isAuthenticated = await checkUserAuthenticated()
+export const metadata: Metadata = {
+  title: "Login | Appopener.io",
+  description: "Login to your Appopener.io account",
+}
 
-  // If authenticated, redirect to dashboard
-  if (isAuthenticated) {
-    redirect("/dashboard")
-  }
-
+export default function LoginPage() {
   return (
-    <div className="container max-w-6xl mx-auto py-12">
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <h1 className="text-3xl font-bold mb-8 text-center">Welcome Back</h1>
-        <OtplessLogin />
+    <div className="container max-w-screen-xl py-12">
+      <div className="flex flex-col items-center justify-center">
+        <div className="w-full max-w-md">
+          <h1 className="text-3xl font-bold text-center mb-6">Welcome Back</h1>
+          <p className="text-gray-500 text-center mb-8">Sign in to your account to continue</p>
+          <LoginForm />
+        </div>
       </div>
     </div>
   )
